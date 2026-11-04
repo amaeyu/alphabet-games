@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { speakJapanese } from "./speech.js";
 
 const PHRASES = ["みて！", "もういっかい", "てつだって"];
 
@@ -17,23 +18,7 @@ export function Communication({ speech }) {
 
   function communicate(phrase) {
     setMessage({ phrase });
-    if (!speech) return;
-
-    try {
-      const synth = window.speechSynthesis;
-      const voice = synth?.getVoices().find(
-        (item) => item.localService && /^ja(?:[-_]|$)/i.test(item.lang),
-      );
-      if (!voice) return;
-
-      const utterance = new SpeechSynthesisUtterance(phrase);
-      utterance.lang = "ja-JP";
-      utterance.voice = voice;
-      synth.cancel();
-      synth.speak(utterance);
-    } catch {
-      // The visual message also works on devices without speech support.
-    }
+    if (speech) speakJapanese(phrase);
   }
 
   return (

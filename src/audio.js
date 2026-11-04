@@ -8,10 +8,7 @@ function getAudioContext() {
   return audioContext;
 }
 
-function playTone(frequency, start, duration, type, volume) {
-  const audio = getAudioContext();
-  if (!audio) return;
-
+function playTone(audio, frequency, start, duration, type, volume) {
   const oscillator = audio.createOscillator();
   const gain = audio.createGain();
 
@@ -35,13 +32,16 @@ export function playCorrectSound(isFinal) {
     void audio.resume().catch(() => {});
   }
 
-  playTone(660, 0, 0.08, "sine", 0.12);
-  playTone(880, 0.075, 0.11, "sine", 0.14);
+  // A quick rising chime with a softer harmony on the last note.
+  playTone(audio, 659, 0, 0.10, "triangle", 0.16);
+  playTone(audio, 880, 0.045, 0.13, "triangle", 0.15);
+  playTone(audio, 1319, 0.09, 0.20, "sine", 0.16);
+  playTone(audio, 1047, 0.09, 0.18, "sine", 0.075);
 
   if (isFinal) {
-    playCelebrationSound(audio, 0.22);
-    [523, 659, 784, 1046].forEach((frequency, index) => {
-      playTone(frequency, 0.22 + index * 0.06, 0.22, "triangle", 0.12);
+    playCelebrationSound(audio, 0.25);
+    [523, 659, 784, 1047, 1568].forEach((frequency, index) => {
+      playTone(audio, frequency, 0.24 + index * 0.065, 0.26, "triangle", 0.13);
     });
   }
 }

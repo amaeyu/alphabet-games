@@ -36,6 +36,7 @@ button {
   min-height: 100svh;
   display: grid;
   place-items: center;
+  overflow-x: clip;
   padding: 24px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0)),
@@ -54,6 +55,35 @@ button {
   justify-content: space-between;
   gap: 16px;
 }
+
+.game__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.home-button {
+  display: grid;
+  place-items: center;
+  min-height: 52px;
+  padding: 0 12px;
+  border: 1px solid #859aa4;
+  border-radius: 8px;
+  color: #213041;
+  background: #fffaf2;
+  text-decoration: none;
+  font-weight: 800;
+  touch-action: manipulation;
+}
+
+@media (max-width: 420px) {
+  .game__top {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
 
 h1 {
   margin: 0;
@@ -187,6 +217,8 @@ h1 {
 }
 
 .message {
+  position: relative;
+  isolation: isolate;
   display: grid;
   place-items: center;
   color: #1e5a56;
@@ -201,7 +233,40 @@ h1 {
   background: #ffecb6;
   border-radius: 12px;
   text-shadow: 0 2px #fff;
-  animation: correct-pop 500ms ease;
+}
+
+.praise {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.praise span {
+  padding: 0.05em 0.28em 0.11em;
+  border: 0.06em solid #fff4c4;
+  border-radius: 0.24em;
+  background: #7b2c62;
+  color: #fff4c4;
+  box-shadow: 0 0.08em 0 #522342, 0 0.12em 0.32em #52234255;
+  font-size: clamp(2.5rem, 8vw, 4.9rem);
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-shadow: 0 0.045em #522342;
+  animation: praise-in 700ms ease-out both;
+}
+
+.message:has(.praise) .message__prompt {
+  opacity: 0;
+}
+
+@keyframes praise-in {
+  0% { opacity: 0; transform: translateX(-48px) rotate(-9deg) scale(0.68); }
+  25% { opacity: 1; transform: rotate(-4deg) scale(1.08); }
+  75% { opacity: 1; transform: rotate(-3deg) scale(1); }
+  100% { opacity: 0; transform: translateX(18px) rotate(-3deg) scale(0.96); }
 }
 
 .next-button {
@@ -498,8 +563,13 @@ h1 {
     transition: none;
   }
 
-  .game .mini-burst {
+  .game .mini-burst,
+  .game .praise {
     display: none;
+  }
+
+  .game .message:has(.praise) .message__prompt {
+    opacity: 1;
   }
 
   .game button:active {

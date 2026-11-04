@@ -31,6 +31,10 @@ for (const [id, label, letters] of [
     await page.getByRole("button", { name: "つぎのもんだい" }).click();
     await expect(placed(page)).toHaveCount(0);
     await expect(page.locator(".letter-button:enabled")).toHaveCount(letters.length);
+    await page.getByRole("link", { name: "トップへ" }).click();
+    await expect(page).toHaveURL(new RegExp("/alphabet-games/$"));
+    await expect(page.getByRole("link", { name: "ギリシア文字" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "キリル文字" })).toBeVisible();
     expect(errors).toEqual([]);
   });
 }
@@ -73,9 +77,11 @@ test("clearing short modes advances the group on next, including wrapping at the
   await expect(range).toHaveText("Α ～ Ζ");
   await tapLetter(page, "Α");
   await expect(page.locator(".mini-burst span")).toHaveCount(8);
+  await expect(page.locator(".praise")).toHaveText("GREAT!");
   for (const letter of "ΒΓΔΕΖ") await tapLetter(page, letter);
   await expect(page.getByText("できた！")).toBeVisible();
   await expect(page.locator(".confetti")).toHaveCount(64);
+  await expect(page.locator(".praise")).toHaveText("PERFECT!");
   await page.getByRole("button", { name: "つぎの6もじ" }).click();
   await expect(range).toHaveText("Η ～ Μ");
   await expect(placed(page)).toHaveCount(0);
@@ -145,6 +151,7 @@ test("communication and speech are independent from play, including after cleari
   await expect(turn).toHaveText("おとなのばん");
   await expect(page.getByText("できた！")).toBeVisible();
   await expect(page.locator(".confetti")).toHaveCount(0);
+  await expect(page.locator(".praise")).toHaveCount(0);
   await page.getByRole("button", { name: "てつだって" }).click();
   await expect(message).toHaveText("てつだって");
   await expect(placed(page)).toHaveCount(6);
@@ -159,12 +166,55 @@ test("communication and speech are independent from play, including after cleari
   }
 });
 
+test("a correct answer plays the Japanese cheer without queuing over speech", async ({ page }, testInfo) => {
+  await page.addInitScript(() => {
+    window.spoken = [];
+    window.voiceBusy = false;
+    Object.defineProperty(window, "speechSynthesis", {
+      value: {
+        get speaking() { return window.voiceBusy; },
+        getVoices: () => [{ lang: "ja-JP", localService: true }],
+        cancel() {},
+        speak(utterance) { window.spoken.push([utterance.text, utterance.pitch]); },
+      },
+    });
+    window.SpeechSynthesisUtterance = class {
+      constructor(text) { this.text = text; }
+    };
+  });
+  await page.goto("cyrillic-game/");
+  await page.getByRole("button", { name: "6もじ", exact: true }).click();
+  await tapLetter(page, "Б");
+  expect(await page.evaluate(() => window.spoken)).toEqual([]);
+  await tapLetter(page, "А");
+  await expect(page.locator(".praise")).toHaveText("GREAT!");
+  expect(await page.evaluate(() => window.spoken)).toEqual([["いえーい！", 1.65]]);
+  if (process.env.QA_SCREENSHOTS) {
+    await page.locator(".praise span").evaluate((element) => {
+      const animation = element.getAnimations()[0];
+      animation.pause();
+      animation.currentTime = 240;
+    });
+    await page.screenshot({ path: testInfo.outputPath("great.png"), timeout: 6000 });
+  }
+  await page.evaluate(() => { window.voiceBusy = true; });
+  await tapLetter(page, "Б");
+  expect(await page.evaluate(() => window.spoken.length)).toBe(1);
+
+  await page.evaluate(() => { window.voiceBusy = false; });
+  await page.getByText("せってい", { exact: true }).click();
+  await page.getByLabel("読み上げ").uncheck();
+  await tapLetter(page, "В");
+  await expect(placed(page)).toHaveCount(3);
+  expect(await page.evaluate(() => window.spoken.length)).toBe(1);
+});
+
 test("tablet portrait and landscape fit the full Cyrillic game and touch targets", async ({ page }, testInfo) => {
   for (const viewport of [{ width: 810, height: 1080 }, { width: 1080, height: 810 }]) {
     await page.setViewportSize(viewport);
     await page.goto("cyrillic-game/");
-    const buttons = page.locator(".letter-button, .mode-buttons button, .communication button");
-    await expect(buttons).toHaveCount(41);
+    const buttons = page.locator(".home-button, .letter-button, .mode-buttons button, .communication button");
+    await expect(buttons).toHaveCount(42);
     const boxes = await buttons.evaluateAll((items) => items.map((item) => {
       const { left, right, top, bottom, width, height } = item.getBoundingClientRect();
       return { left, right, top, bottom, width, height };

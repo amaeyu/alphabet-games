@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { ALPHABETS, createQuestion, getRanges, loadSettings, saveSettings } from "./game.js";
 import { playCorrectSound, playWrongSound } from "./audio.js";
 import { Communication } from "./Communication.jsx";
+import { speakJapanese } from "./speech.js";
 import "./styles.css";
 
 const CONFETTI_COLORS = ["#ffd45a", "#7fc8f0", "#ff9d7a", "#5fa8a3", "#f36f9b"];
@@ -56,6 +57,7 @@ function App({ id }) {
   const [celebrationPieces, setCelebrationPieces] = useState([]);
   const isComplete = placedCount === question.answer.length;
   const placed = question.answer.slice(0, placedCount);
+  const showPraise = recentIndex !== null;
 
   useEffect(() => saveSettings(id, settings), [id, settings]);
 
@@ -67,7 +69,7 @@ function App({ id }) {
 
   useEffect(() => {
     if (recentIndex === null) return;
-    const timeout = window.setTimeout(() => setRecentIndex(null), 520);
+    const timeout = window.setTimeout(() => setRecentIndex(null), 700);
     return () => window.clearTimeout(timeout);
   }, [recentIndex]);
 
@@ -88,7 +90,10 @@ function App({ id }) {
       setRecentIndex(placedCount);
       if (isFinal) setCelebrationPieces(createCelebrationPieces());
     }
-    if (settings.effects) playCorrectSound(isFinal);
+    if (settings.effects) {
+      playCorrectSound(isFinal);
+      if (settings.speech) speakJapanese("いえーい！", { pitch: 1.65, rate: 1.08, interrupt: false });
+    }
   }
 
   function resetAnswer() {
@@ -132,11 +137,14 @@ function App({ id }) {
       <section className="game__panel" aria-label={`${name}文字ならべゲーム`}>
         <div className="game__top">
           <h1>{name}文字ならべ</h1>
-          <button className="icon-button" type="button" onClick={resetAnswer}
-            aria-label="答えを消す" title="答えを消す"
-            disabled={placedCount === 0 || isComplete}>
-            ↺
-          </button>
+          <div className="game__actions">
+            <a className="home-button" href={import.meta.env.BASE_URL}>トップへ</a>
+            <button className="icon-button" type="button" onClick={resetAnswer}
+              aria-label="答えを消す" title="答えを消す"
+              disabled={placedCount === 0 || isComplete}>
+              ↺
+            </button>
+          </div>
         </div>
 
         <div className="game-controls">
@@ -171,8 +179,15 @@ function App({ id }) {
           )}
         </div>}
 
-        <div className={isComplete ? "message message--complete" : "message"} aria-live="polite">
-          {isComplete ? "できた！" : "じゅんばんに タップ"}
+        <div className={isComplete ? "message message--complete" : "message"}>
+          <span className="message__prompt" aria-live="polite">
+            {isComplete ? "できた！" : "じゅんばんに タップ"}
+          </span>
+          {showPraise && (
+            <div className="praise" key={recentIndex} aria-hidden="true">
+              <span lang="en">{isComplete ? "PERFECT!" : "GREAT!"}</span>
+            </div>
+          )}
         </div>
 
         <div className="choices" aria-label="文字の選択肢">
