@@ -4,90 +4,34 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>文字ならべゲーム</title>
-    <style>
-      :root {
-        color: #213041;
-        background: #f7f3ea;
-        font-family:
-          "Hiragino Sans",
-          "Yu Gothic",
-          "Meiryo",
-          system-ui,
-          -apple-system,
-          BlinkMacSystemFont,
-          sans-serif;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      html,
-      body {
-        min-height: 100%;
-        margin: 0;
-      }
-
-      body {
-        display: grid;
-        place-items: center;
-        padding: 24px;
-        background:
-          linear-gradient(180deg, rgba(255, 255, 255, 0.76), rgba(255, 255, 255, 0)),
-          #f7f3ea;
-      }
-
-      main {
-        width: min(100%, 760px);
-        display: grid;
-        gap: 22px;
-      }
-
-      h1 {
-        margin: 0;
-        font-size: clamp(2.2rem, 6vw, 4.4rem);
-        line-height: 1.08;
-      }
-
-      .games {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 16px;
-      }
-
-      a {
-        display: grid;
-        min-height: 150px;
-        place-items: center;
-        border-radius: 8px;
-        color: #213041;
-        background: #ffd45a;
-        box-shadow: 0 9px 0 #e2ab28;
-        font-size: clamp(1.8rem, 5vw, 3rem);
-        font-weight: 850;
-        line-height: 1.15;
-        text-align: center;
-        text-decoration: none;
-        touch-action: manipulation;
-      }
-
-      a:nth-child(2) {
-        background: #7fc8f0;
-        box-shadow: 0 9px 0 #4c9ecf;
-      }
-
-      a:active {
-        transform: translateY(4px);
-        box-shadow: 0 4px 0 rgba(0, 0, 0, 0.22);
-      }
-    </style>
+    <link rel="stylesheet" href="/src/home.css" />
   </head>
   <body>
-    <main>
-      <h1>文字ならべゲーム</h1>
+    <main class="lobby">
+      <header class="lobby__header">
+        <div class="lobby__tiles" aria-hidden="true"><span>Я</span><span>Ω</span><span>A</span></div>
+        <h1>文字ならべゲーム</h1>
+        <p>どの文字で あそぶ？</p>
+      </header>
       <nav class="games" aria-label="ゲームを選ぶ">
-        <a href="./cyrillic-game/">キリル文字</a>
-        <a href="./greek-game/">ギリシア文字</a>
+        <a class="game-card game-card--cyrillic" href="./cyrillic-game/">
+          <span class="game-card__count" aria-hidden="true">33もじ</span>
+          <span class="game-card__name">キリル文字</span>
+          <span class="game-card__sample" aria-hidden="true">Ж Щ Я</span>
+          <span class="game-card__play" aria-hidden="true">▶</span>
+        </a>
+        <a class="game-card game-card--greek" href="./greek-game/">
+          <span class="game-card__count" aria-hidden="true">24もじ</span>
+          <span class="game-card__name">ギリシア文字</span>
+          <span class="game-card__sample" aria-hidden="true">Δ Ψ Ω</span>
+          <span class="game-card__play" aria-hidden="true">▶</span>
+        </a>
+        <a class="game-card game-card--english" href="./english-game/">
+          <span class="game-card__count" aria-hidden="true">26もじ</span>
+          <span class="game-card__name">英語</span>
+          <span class="game-card__sample" aria-hidden="true">A B C</span>
+          <span class="game-card__play" aria-hidden="true">▶</span>
+        </a>
       </nav>
     </main>
   </body>
