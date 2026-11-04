@@ -240,7 +240,9 @@ h1 {
   z-index: 2;
   inset: 0;
   display: grid;
+  grid-template-rows: minmax(0, 1fr);
   place-items: center;
+  transform: translateY(-8px);
   pointer-events: none;
 }
 
@@ -256,6 +258,10 @@ h1 {
   letter-spacing: 0.03em;
   text-shadow: 0 0.045em #522342;
   animation: praise-in 700ms ease-out both;
+}
+
+.message:has(.praise) {
+  z-index: 2;
 }
 
 .message:has(.praise) .message__prompt {
