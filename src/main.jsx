@@ -24,7 +24,7 @@ function Settings({ settings, ranges, changeRange, updateSetting }) {
       <div className="settings__controls">
         <label>
           文字の数
-          <select value={settings.size} onChange={(event) => changeRange(event.target.value, 0)}>
+          <select aria-label="文字の数" value={settings.size} onChange={(event) => changeRange(event.target.value, 0)}>
             <option value="6">6もじ</option>
             <option value="12">12もじ</option>
             <option value="all">ぜんぶ</option>
@@ -33,7 +33,7 @@ function Settings({ settings, ranges, changeRange, updateSetting }) {
         {settings.size !== "all" && (
           <label>
             文字の範囲
-            <select value={settings.range} onChange={(event) => changeRange(settings.size, Number(event.target.value))}>
+            <select aria-label="文字の範囲" value={settings.range} onChange={(event) => changeRange(settings.size, Number(event.target.value))}>
               {ranges.map((range, index) => (
                 <option key={range[0]} value={index}>{range[0]} ～ {range[range.length - 1]}</option>
               ))}
@@ -42,7 +42,7 @@ function Settings({ settings, ranges, changeRange, updateSetting }) {
         )}
         <label>
           あそびかた
-          <select value={settings.together ? "together" : "solo"}
+          <select aria-label="あそびかた" value={settings.together ? "together" : "solo"}
             onChange={(event) => updateSetting("together", event.target.value === "together")}>
             <option value="solo">ひとりで</option>
             <option value="together">いっしょに</option>

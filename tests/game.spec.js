@@ -41,7 +41,7 @@ test("range changes confirm progress loss and save only settings", async ({ page
   const size = page.getByLabel("文字の数");
   await size.selectOption("6");
   await expect(page.getByRole("listitem")).toHaveCount(6);
-  await expect(page.getByText("А ～ Е", { exact: true })).toBeVisible();
+  await expect(page.locator(".range").getByText("А ～ Е", { exact: true })).toBeVisible();
   await tapLetter(page, "А");
 
   page.once("dialog", (dialog) => dialog.dismiss());
@@ -52,16 +52,16 @@ test("range changes confirm progress loss and save only settings", async ({ page
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "つぎの文字グループ" }).click();
   await expect(page.getByLabel("文字の範囲")).toHaveValue("1");
-  await expect(page.getByText("Ё ～ К", { exact: true })).toBeVisible();
+  await expect(page.locator(".range").getByText("Ё ～ К", { exact: true })).toBeVisible();
   await expect(placed(page)).toHaveCount(0);
 
   await size.selectOption("12");
   await expect(page.getByRole("listitem")).toHaveCount(12);
   await page.getByLabel("文字の範囲").selectOption("2");
-  await expect(page.getByText("Ф ～ Я", { exact: true })).toBeVisible();
+  await expect(page.locator(".range").getByText("Ф ～ Я", { exact: true })).toBeVisible();
   await tapLetter(page, "Ф");
   await page.reload();
-  await expect(page.getByText("Ф ～ Я", { exact: true })).toBeVisible();
+  await expect(page.locator(".range").getByText("Ф ～ Я", { exact: true })).toBeVisible();
   await expect(placed(page)).toHaveCount(0);
 });
 
