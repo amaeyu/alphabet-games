@@ -38,15 +38,16 @@ for (const [id, label, letters] of [
 test("range changes confirm progress loss and save only settings", async ({ page }) => {
   await page.goto("cyrillic-game/");
   await page.getByText("せってい", { exact: true }).click();
-  const size = page.getByLabel("文字の数");
-  await size.selectOption("6");
+  const six = page.getByRole("button", { name: "6もじ", exact: true });
+  const twelve = page.getByRole("button", { name: "12もじ", exact: true });
+  await six.click();
   await expect(page.getByRole("listitem")).toHaveCount(6);
   await expect(page.locator(".range").getByText("А ～ Е", { exact: true })).toBeVisible();
   await tapLetter(page, "А");
 
   page.once("dialog", (dialog) => dialog.dismiss());
-  await size.selectOption("12");
-  await expect(size).toHaveValue("6");
+  await twelve.click();
+  await expect(six).toHaveAttribute("aria-pressed", "true");
   await expect(placed(page)).toHaveText(["А"]);
 
   page.once("dialog", (dialog) => dialog.accept());
@@ -55,13 +56,38 @@ test("range changes confirm progress loss and save only settings", async ({ page
   await expect(page.locator(".range").getByText("Ё ～ К", { exact: true })).toBeVisible();
   await expect(placed(page)).toHaveCount(0);
 
-  await size.selectOption("12");
+  await twelve.click();
   await expect(page.getByRole("listitem")).toHaveCount(12);
   await page.getByLabel("文字の範囲").selectOption("2");
   await expect(page.locator(".range").getByText("Ф ～ Я", { exact: true })).toBeVisible();
   await tapLetter(page, "Ф");
   await page.reload();
   await expect(page.locator(".range").getByText("Ф ～ Я", { exact: true })).toBeVisible();
+  await expect(placed(page)).toHaveCount(0);
+});
+
+test("clearing short modes advances the group on next, including wrapping at the end", async ({ page }) => {
+  await page.goto("greek-game/");
+  const range = page.locator(".range strong");
+  await page.getByRole("button", { name: "6もじ", exact: true }).click();
+  await expect(range).toHaveText("Α ～ Ζ");
+  await tapLetter(page, "Α");
+  await expect(page.locator(".mini-burst span")).toHaveCount(8);
+  for (const letter of "ΒΓΔΕΖ") await tapLetter(page, letter);
+  await expect(page.getByText("できた！")).toBeVisible();
+  await expect(page.locator(".confetti")).toHaveCount(64);
+  await page.getByRole("button", { name: "つぎの6もじ" }).click();
+  await expect(range).toHaveText("Η ～ Μ");
+  await expect(placed(page)).toHaveCount(0);
+
+  await page.getByRole("button", { name: "6もじ", exact: true }).click();
+  await expect(range).toHaveText("Η ～ Μ");
+  await page.getByRole("button", { name: "12もじ", exact: true }).click();
+  await page.getByRole("button", { name: "つぎの文字グループ" }).click();
+  await expect(range).toHaveText("Ν ～ Ω");
+  for (const letter of "ΝΞΟΠΡΣΤΥΦΧΨΩ") await tapLetter(page, letter);
+  await page.getByRole("button", { name: "つぎの12もじ" }).click();
+  await expect(range).toHaveText("Α ～ Μ");
   await expect(placed(page)).toHaveCount(0);
 });
 
@@ -88,8 +114,8 @@ test("communication and speech are independent from play, including after cleari
   });
   await page.goto("greek-game/");
   await page.getByText("せってい", { exact: true }).click();
-  await page.getByLabel("文字の数").selectOption("6");
-  await page.getByLabel("あそびかた").selectOption("together");
+  await page.getByRole("button", { name: "6もじ", exact: true }).click();
+  await page.getByRole("button", { name: "いっしょに" }).click();
   await page.getByLabel("効果音").uncheck();
   await page.getByLabel("アニメーション").uncheck();
 
@@ -110,10 +136,10 @@ test("communication and speech are independent from play, including after cleari
   await expect(turn).toHaveText("おとなのばん");
   await expect(placed(page)).toHaveText(["Α"]);
 
-  await page.getByLabel("あそびかた").selectOption("solo");
+  await page.getByRole("button", { name: "ひとりで" }).click();
   await expect(turn).toHaveCount(0);
   await expect(placed(page)).toHaveText(["Α"]);
-  await page.getByLabel("あそびかた").selectOption("together");
+  await page.getByRole("button", { name: "いっしょに" }).click();
   await expect(turn).toHaveText("こどものばん");
   for (const letter of "ΒΓΔΕΖ") await tapLetter(page, letter);
   await expect(turn).toHaveText("おとなのばん");
@@ -137,8 +163,8 @@ test("tablet portrait and landscape fit the full Cyrillic game and touch targets
   for (const viewport of [{ width: 810, height: 1080 }, { width: 1080, height: 810 }]) {
     await page.setViewportSize(viewport);
     await page.goto("cyrillic-game/");
-    const buttons = page.locator(".letter-button, .communication button");
-    await expect(buttons).toHaveCount(36);
+    const buttons = page.locator(".letter-button, .mode-buttons button, .communication button");
+    await expect(buttons).toHaveCount(41);
     const boxes = await buttons.evaluateAll((items) => items.map((item) => {
       const { left, right, top, bottom, width, height } = item.getBoundingClientRect();
       return { left, right, top, bottom, width, height };

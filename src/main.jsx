@@ -8,10 +8,10 @@ import "./styles.css";
 const CONFETTI_COLORS = ["#ffd45a", "#7fc8f0", "#ff9d7a", "#5fa8a3", "#f36f9b"];
 
 function createCelebrationPieces() {
-  return Array.from({ length: 28 }, (_, index) => ({
+  return Array.from({ length: 64 }, (_, index) => ({
     id: `${Date.now()}-${index}`,
     color: CONFETTI_COLORS[index % CONFETTI_COLORS.length],
-    delay: `${(index % 9) * 0.045}s`,
+    delay: `${(index % 13) * 0.055}s`,
     left: `${8 + ((index * 17) % 84)}%`,
     rotate: `${(index % 2 === 0 ? 1 : -1) * (90 + index * 9)}deg`,
   }));
@@ -22,14 +22,6 @@ function Settings({ settings, ranges, changeRange, updateSetting }) {
     <details className="settings">
       <summary>せってい</summary>
       <div className="settings__controls">
-        <label>
-          文字の数
-          <select aria-label="文字の数" value={settings.size} onChange={(event) => changeRange(event.target.value, 0)}>
-            <option value="6">6もじ</option>
-            <option value="12">12もじ</option>
-            <option value="all">ぜんぶ</option>
-          </select>
-        </label>
         {settings.size !== "all" && (
           <label>
             文字の範囲
@@ -40,14 +32,6 @@ function Settings({ settings, ranges, changeRange, updateSetting }) {
             </select>
           </label>
         )}
-        <label>
-          あそびかた
-          <select aria-label="あそびかた" value={settings.together ? "together" : "solo"}
-            onChange={(event) => updateSetting("together", event.target.value === "together")}>
-            <option value="solo">ひとりで</option>
-            <option value="together">いっしょに</option>
-          </select>
-        </label>
         {[["effects", "効果音"], ["speech", "読み上げ"], ["motion", "アニメーション"]].map(([key, label]) => (
           <label key={key}>
             <input type="checkbox" checked={settings[key]}
@@ -129,7 +113,12 @@ function App({ id }) {
     startQuestion(getRanges(letters, size)[range]);
   }
 
+  function nextGroup() {
+    changeRange(settings.size, (settings.range + 1) % ranges.length);
+  }
+
   function updateSetting(key, value) {
+    if (settings[key] === value) return;
     setSettings({ ...settings, [key]: value });
     if (key === "together") setAdultTurn(false);
     if (key === "motion" && !value) {
@@ -150,15 +139,31 @@ function App({ id }) {
           </button>
         </div>
 
-        <Settings settings={settings} ranges={ranges} changeRange={changeRange} updateSetting={updateSetting} />
+        <div className="game-controls">
+          <div className="mode-buttons mode-buttons--size" role="group" aria-label="文字の数">
+            {[["6", "6もじ"], ["12", "12もじ"], ["all", "ぜんぶ"]].map(([size, label]) => (
+              <button key={size} type="button" aria-pressed={size === settings.size}
+                onClick={() => { if (size !== settings.size) changeRange(size, 0); }}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="mode-buttons mode-buttons--play" role="group" aria-label="あそびかた">
+            <button type="button" aria-pressed={!settings.together}
+              onClick={() => updateSetting("together", false)}>ひとりで</button>
+            <button type="button" aria-pressed={settings.together}
+              onClick={() => updateSetting("together", true)}>いっしょに</button>
+          </div>
+          <Settings settings={settings} ranges={ranges} changeRange={changeRange} updateSetting={updateSetting} />
+        </div>
 
         {(settings.size !== "all" || settings.together) && <div className="round-info">
           {settings.size !== "all" && (
             <div className="range">
               <strong>{question.answer[0]} ～ {question.answer[question.answer.length - 1]}</strong>
-              <button type="button" onClick={() => changeRange(settings.size, (settings.range + 1) % ranges.length)}>
-                つぎの文字グループ
-              </button>
+              {!isComplete && (
+                <button type="button" onClick={nextGroup}>つぎの文字グループ</button>
+              )}
             </div>
           )}
           {settings.together && (
@@ -166,7 +171,7 @@ function App({ id }) {
           )}
         </div>}
 
-        <div className="message" aria-live="polite">
+        <div className={isComplete ? "message message--complete" : "message"} aria-live="polite">
           {isComplete ? "できた！" : "じゅんばんに タップ"}
         </div>
 
@@ -189,7 +194,16 @@ function App({ id }) {
               <div className={classes.filter(Boolean).join(" ")} key={index} role="listitem"
                 aria-label={letter ? `${index + 1}番目は${letter}` : `${index + 1}番目の答え欄`}>
                 {letter}
-                {isRecent && <span className="mini-burst" aria-hidden="true"><span /><span /><span /><span /></span>}
+                {isRecent && (
+                  <span className="mini-burst" aria-hidden="true">
+                    {Array.from({ length: 8 }, (_, spark) => (
+                      <span key={spark} style={{
+                        "--spark-angle": `${spark * 45}deg`,
+                        "--spark-color": CONFETTI_COLORS[spark % CONFETTI_COLORS.length],
+                      }}>✦</span>
+                    ))}
+                  </span>
+                )}
               </div>
             );
           })}
@@ -209,8 +223,9 @@ function App({ id }) {
                 ))}
               </div>
             )}
-            <button className="next-button" type="button" onClick={() => startQuestion(question.answer)}>
-              つぎのもんだい
+            <button className="next-button" type="button"
+              onClick={settings.size === "all" ? () => startQuestion(question.answer) : nextGroup}>
+              {settings.size === "all" ? "つぎのもんだい" : `つぎの${settings.size}もじ`}
             </button>
           </>
         )}
