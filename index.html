@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>文字ならべゲーム</title>
+    <link rel="stylesheet" crossorigin href="/alphabet-games/assets/index-aN9U9pzF.css">
+  </head>
+  <body>
+    <main class="lobby">
+      <header class="lobby__header">
+        <div class="lobby__tiles" aria-hidden="true"><span>Я</span><span>Ω</span><span>A</span></div>
+        <h1>文字ならべゲーム</h1>
+        <p>どの文字で あそぶ？</p>
+      </header>
+      <nav class="games" aria-label="ゲームを選ぶ">
+        <a class="game-card game-card--cyrillic" href="./cyrillic-game/">
+          <span class="game-card__count" aria-hidden="true">33もじ</span>
+          <span class="game-card__name">キリル文字</span>
+          <span class="game-card__sample" aria-hidden="true">Ж Щ Я</span>
+          <span class="game-card__play" aria-hidden="true">▶</span>
+        </a>
+        <a class="game-card game-card--greek" href="./greek-game/">
+          <span class="game-card__count" aria-hidden="true">24もじ</span>
+          <span class="game-card__name">ギリシア文字</span>
+          <span class="game-card__sample" aria-hidden="true">Δ Ψ Ω</span>
+          <span class="game-card__play" aria-hidden="true">▶</span>
+        </a>
+        <a class="game-card game-card--english" href="./english-game/">
+          <span class="game-card__count" aria-hidden="true">26もじ</span>
+          <span class="game-card__name">英語</span>
+          <span class="game-card__sample" aria-hidden="true">A B C</span>
+          <span class="game-card__play" aria-hidden="true">▶</span>
+        </a>
+      </nav>
+    </main>
+  </body>
+</html>
