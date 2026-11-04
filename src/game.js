@@ -1,6 +1,7 @@
 export const ALPHABETS = {
-  greek: { name: "ギリシア", letters: [..."ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ"] },
-  cyrillic: { name: "キリル", letters: [..."АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"] },
+  english: { name: "英語", letters: [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"] },
+  greek: { name: "ギリシア文字", letters: [..."ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ"] },
+  cyrillic: { name: "キリル文字", letters: [..."АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"] },
 };
 
 export const DEFAULT_SETTINGS = {

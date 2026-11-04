@@ -4,16 +4,17 @@ const tapLetter = (page, letter) => page.getByRole("button", { name: `${letter}�
 const placed = (page) => page.locator(".answer-slot--filled");
 
 for (const [id, label, letters] of [
-  ["greek", "ギリシア", "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ"],
-  ["cyrillic", "キリル", "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"],
+  ["greek", "ギリシア文字", "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ"],
+  ["cyrillic", "キリル文字", "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"],
+  ["english", "英語", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"],
 ]) {
   test(`${id}: home link, full game, reset, completion and replay`, async ({ page }) => {
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto("./");
-    await page.getByRole("link", { name: `${label}文字` }).click();
+    await page.getByRole("link", { name: label }).click();
     await expect(page).toHaveURL(new RegExp(`/alphabet-games/${id}-game/$`));
-    await expect(page.getByRole("heading", { name: `${label}文字ならべ` })).toBeVisible();
+    await expect(page.getByRole("heading", { name: `${label}ならべ` })).toBeVisible();
     await expect(page.getByRole("listitem")).toHaveCount(letters.length);
     await expect(page.locator(".letter-button")).toHaveCount(letters.length);
 
@@ -35,6 +36,7 @@ for (const [id, label, letters] of [
     await expect(page).toHaveURL(new RegExp("/alphabet-games/$"));
     await expect(page.getByRole("link", { name: "ギリシア文字" })).toBeVisible();
     await expect(page.getByRole("link", { name: "キリル文字" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "英語" })).toBeVisible();
     expect(errors).toEqual([]);
   });
 }
@@ -70,30 +72,45 @@ test("range changes confirm progress loss and save only settings", async ({ page
   await expect(placed(page)).toHaveCount(0);
 });
 
-test("clearing short modes advances the group on next, including wrapping at the end", async ({ page }) => {
-  await page.goto("greek-game/");
+test("English short rounds show praise only when cleared and advance the group", async ({ page }, testInfo) => {
+  await page.goto("english-game/");
   const range = page.locator(".range strong");
+  const praise = page.locator(".praise");
   await page.getByRole("button", { name: "6もじ", exact: true }).click();
-  await expect(range).toHaveText("Α ～ Ζ");
-  await tapLetter(page, "Α");
+  await expect(range).toHaveText("A ～ F");
+  await tapLetter(page, "A");
   await expect(page.locator(".mini-burst span")).toHaveCount(8);
-  await expect(page.locator(".praise")).toHaveText("GREAT!");
-  for (const letter of "ΒΓΔΕΖ") await tapLetter(page, letter);
+  await expect(praise).toHaveCount(0);
+  for (const letter of "BCDEF") await tapLetter(page, letter);
   await expect(page.getByText("できた！")).toBeVisible();
   await expect(page.locator(".confetti")).toHaveCount(64);
-  await expect(page.locator(".praise")).toHaveText("PERFECT!");
+  await expect(praise).toHaveText("GREAT!");
   await page.getByRole("button", { name: "つぎの6もじ" }).click();
-  await expect(range).toHaveText("Η ～ Μ");
+  await expect(range).toHaveText("G ～ L");
+  await expect(praise).toHaveCount(0);
   await expect(placed(page)).toHaveCount(0);
 
   await page.getByRole("button", { name: "6もじ", exact: true }).click();
-  await expect(range).toHaveText("Η ～ Μ");
+  await expect(range).toHaveText("G ～ L");
+  for (const letter of "GHIJKL") await tapLetter(page, letter);
+  await expect(praise).toHaveText("PERFECT!");
   await page.getByRole("button", { name: "12もじ", exact: true }).click();
-  await page.getByRole("button", { name: "つぎの文字グループ" }).click();
-  await expect(range).toHaveText("Ν ～ Ω");
-  for (const letter of "ΝΞΟΠΡΣΤΥΦΧΨΩ") await tapLetter(page, letter);
+  await page.getByText("せってい", { exact: true }).click();
+  await page.getByLabel("文字の範囲").selectOption("2");
+  await page.getByText("せってい", { exact: true }).click();
+  await expect(range).toHaveText("O ～ Z");
+  for (const letter of "OPQRSTUVWXYZ") await tapLetter(page, letter);
+  await expect(praise).toHaveText("YOU DID IT!");
+  if (process.env.QA_SCREENSHOTS) {
+    await praise.locator("span").evaluate((element) => {
+      const animation = element.getAnimations()[0];
+      animation.pause();
+      animation.currentTime = 600;
+    });
+    await page.screenshot({ path: testInfo.outputPath("english-clear.png"), timeout: 6000 });
+  }
   await page.getByRole("button", { name: "つぎの12もじ" }).click();
-  await expect(range).toHaveText("Α ～ Μ");
+  await expect(range).toHaveText("A ～ L");
   await expect(placed(page)).toHaveCount(0);
 });
 
@@ -166,47 +183,22 @@ test("communication and speech are independent from play, including after cleari
   }
 });
 
-test("a correct answer plays the Japanese cheer without queuing over speech", async ({ page }, testInfo) => {
-  await page.addInitScript(() => {
-    window.spoken = [];
-    window.voiceBusy = false;
-    Object.defineProperty(window, "speechSynthesis", {
-      value: {
-        get speaking() { return window.voiceBusy; },
-        getVoices: () => [{ lang: "ja-JP", localService: true }],
-        cancel() {},
-        speak(utterance) { window.spoken.push([utterance.text, utterance.pitch]); },
-      },
-    });
-    window.SpeechSynthesisUtterance = class {
-      constructor(text) { this.text = text; }
-    };
-  });
-  await page.goto("cyrillic-game/");
-  await page.getByRole("button", { name: "6もじ", exact: true }).click();
-  await tapLetter(page, "Б");
-  expect(await page.evaluate(() => window.spoken)).toEqual([]);
-  await tapLetter(page, "А");
-  await expect(page.locator(".praise")).toHaveText("GREAT!");
-  expect(await page.evaluate(() => window.spoken)).toEqual([["いえーい！", 1.65]]);
-  if (process.env.QA_SCREENSHOTS) {
-    await page.locator(".praise span").evaluate((element) => {
-      const animation = element.getAnimations()[0];
-      animation.pause();
-      animation.currentTime = 240;
-    });
-    await page.screenshot({ path: testInfo.outputPath("great.png"), timeout: 6000 });
+test("language cards fit and show a sample alphabet", async ({ page }, testInfo) => {
+  for (const viewport of [{ width: 810, height: 1080 }, { width: 1080, height: 810 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto("./");
+    const cards = page.locator(".game-card");
+    await expect(cards).toHaveCount(3);
+    await expect(page.locator(".game-card__sample")).toHaveText(["Ж Щ Я", "Δ Ψ Ω", "A B C"]);
+    for (const card of await cards.all()) {
+      const bounds = await card.boundingBox();
+      expect(bounds.x).toBeGreaterThanOrEqual(0);
+      expect(bounds.x + bounds.width).toBeLessThanOrEqual(viewport.width);
+    }
+    if (process.env.QA_SCREENSHOTS) {
+      await page.screenshot({ path: testInfo.outputPath(`lobby-${viewport.width}.png`), fullPage: true });
+    }
   }
-  await page.evaluate(() => { window.voiceBusy = true; });
-  await tapLetter(page, "Б");
-  expect(await page.evaluate(() => window.spoken.length)).toBe(1);
-
-  await page.evaluate(() => { window.voiceBusy = false; });
-  await page.getByText("せってい", { exact: true }).click();
-  await page.getByLabel("読み上げ").uncheck();
-  await tapLetter(page, "В");
-  await expect(placed(page)).toHaveCount(3);
-  expect(await page.evaluate(() => window.spoken.length)).toBe(1);
 });
 
 test("tablet portrait and landscape fit the full Cyrillic game and touch targets", async ({ page }, testInfo) => {

@@ -3,10 +3,22 @@ import { createRoot } from "react-dom/client";
 import { ALPHABETS, createQuestion, getRanges, loadSettings, saveSettings } from "./game.js";
 import { playCorrectSound, playWrongSound } from "./audio.js";
 import { Communication } from "./Communication.jsx";
-import { speakJapanese } from "./speech.js";
 import "./styles.css";
 
 const CONFETTI_COLORS = ["#ffd45a", "#7fc8f0", "#ff9d7a", "#5fa8a3", "#f36f9b"];
+
+const PRAISE = [
+  "GREAT!",
+  "PERFECT!",
+  "YOU DID IT!",
+  "AMAZING!",
+  "WELL DONE!",
+  "YOU’RE A STAR!",
+  "THAT WAS AWESOME!",
+  "FANTASTIC!",
+  "WHAT A GREAT JOB!",
+  "BRILLIANT!",
+];
 
 function createCelebrationPieces() {
   return Array.from({ length: 64 }, (_, index) => ({
@@ -55,9 +67,10 @@ function App({ id }) {
   const [wrong, setWrong] = useState(null);
   const [recentIndex, setRecentIndex] = useState(null);
   const [celebrationPieces, setCelebrationPieces] = useState([]);
+  const [praiseIndex, setPraiseIndex] = useState(-1);
   const isComplete = placedCount === question.answer.length;
   const placed = question.answer.slice(0, placedCount);
-  const showPraise = recentIndex !== null;
+  const showPraise = isComplete && recentIndex !== null && praiseIndex >= 0;
 
   useEffect(() => saveSettings(id, settings), [id, settings]);
 
@@ -69,9 +82,9 @@ function App({ id }) {
 
   useEffect(() => {
     if (recentIndex === null) return;
-    const timeout = window.setTimeout(() => setRecentIndex(null), 700);
+    const timeout = window.setTimeout(() => setRecentIndex(null), isComplete ? 1500 : 520);
     return () => window.clearTimeout(timeout);
-  }, [recentIndex]);
+  }, [isComplete, recentIndex]);
 
   function chooseLetter(letter) {
     if (isComplete || placed.includes(letter)) return;
@@ -88,12 +101,12 @@ function App({ id }) {
     if (settings.together) setAdultTurn(!adultTurn);
     if (settings.motion) {
       setRecentIndex(placedCount);
-      if (isFinal) setCelebrationPieces(createCelebrationPieces());
+      if (isFinal) {
+        setCelebrationPieces(createCelebrationPieces());
+        setPraiseIndex((index) => (index + 1) % PRAISE.length);
+      }
     }
-    if (settings.effects) {
-      playCorrectSound(isFinal);
-      if (settings.speech) speakJapanese("いえーい！", { pitch: 1.65, rate: 1.08, interrupt: false });
-    }
+    if (settings.effects) playCorrectSound(isFinal);
   }
 
   function resetAnswer() {
@@ -134,9 +147,9 @@ function App({ id }) {
 
   return (
     <main className="game" data-motion={settings.motion}>
-      <section className="game__panel" aria-label={`${name}文字ならべゲーム`}>
+      <section className="game__panel" aria-label={`${name}ならべゲーム`}>
         <div className="game__top">
-          <h1>{name}文字ならべ</h1>
+          <h1>{name}ならべ</h1>
           <div className="game__actions">
             <a className="home-button" href={import.meta.env.BASE_URL}>トップへ</a>
             <button className="icon-button" type="button" onClick={resetAnswer}
@@ -185,7 +198,7 @@ function App({ id }) {
           </span>
           {showPraise && (
             <div className="praise" key={recentIndex} aria-hidden="true">
-              <span lang="en">{isComplete ? "PERFECT!" : "GREAT!"}</span>
+              <span lang="en">{PRAISE[praiseIndex]}</span>
             </div>
           )}
         </div>

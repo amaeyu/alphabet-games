@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { ALPHABETS, createQuestion, DEFAULT_SETTINGS, getRanges, loadSettings, saveSettings } from "../src/game.js";
 
-for (const [id, expectedCount] of [["greek", 24], ["cyrillic", 33]]) {
+for (const [id, expectedCount] of [["greek", 24], ["cyrillic", 33], ["english", 26]]) {
   const { letters } = ALPHABETS[id];
 
   test(`${id}: full alphabet and every contiguous range`, () => {

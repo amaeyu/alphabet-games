@@ -247,17 +247,18 @@ h1 {
 }
 
 .praise span {
+  max-width: calc(100% - 24px);
   padding: 0.05em 0.28em 0.11em;
   border: 0.06em solid #fff4c4;
   border-radius: 0.24em;
   background: #7b2c62;
   color: #fff4c4;
   box-shadow: 0 0.08em 0 #522342, 0 0.12em 0.32em #52234255;
-  font-size: clamp(2.5rem, 8vw, 4.9rem);
+  font-size: clamp(1.5rem, 5vw, 3.7rem);
   font-weight: 900;
   letter-spacing: 0.03em;
   text-shadow: 0 0.045em #522342;
-  animation: praise-in 700ms ease-out both;
+  animation: praise-in 1500ms ease-out both;
 }
 
 .message:has(.praise) {
